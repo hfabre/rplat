@@ -3,7 +3,6 @@ package game
 import (
 	"fmt"
 	rl "github.com/chunqian/go-raylib/raylib"
-	"time"
 )
 
 
@@ -23,14 +22,7 @@ const Gravity = 10
 
 // Debug
 const Debug = true
-
 var Pause = false
-var TimeBetweenPauses = 100 * time.Millisecond
-var lastPauseTime = time.Now()
-
-var Slow = false
-var TimeBetweenSlow = 100 * time.Millisecond
-var lastSlowTime = time.Now()
 
 type Game struct {
 	player *Player
@@ -39,6 +31,7 @@ type Game struct {
 	dt float64
 	time float64
 	accumulator float64
+	inputManager InputManager
 }
 
 func NewGame() Game {
@@ -57,7 +50,7 @@ func NewGame() Game {
 	walls[1] = rl.Rectangle{500, 530, 280, 32}
 	walls[2] = rl.Rectangle{0, 200, 500, 32}
 
-	g := Game{player: &player, walls: walls, currentTime: rl.GetTime(), dt: 0.01}
+	g := Game{player: &player, walls: walls, currentTime: rl.GetTime(), dt: 0.01, inputManager: NewInputManager()}
 
 	return g
 }
@@ -85,7 +78,8 @@ func (g *Game) Tick() {
 	g.accumulator += frameTime
 
 	for g.accumulator >= g.dt {
-		g.HandleInput(g.deltaTime(g.dt))
+		g.inputManager.Update()
+		g.HandleEvents()
 
 		if !Pause {
 			g.player.color = rl.Green
@@ -96,6 +90,7 @@ func (g *Game) Tick() {
 
 		g.time += g.dt
 		g.accumulator -= g.dt
+		g.inputManager.Clear()
 	}
 
 	alpha := g.accumulator / g.dt
@@ -106,40 +101,29 @@ func (g Game) deltaTime(dt float64) float32 {
 	return float32(dt)
 }
 
-func (g *Game) HandleInput(deltaTime float32) {
-	if Debug && time.Since(lastPauseTime) > TimeBetweenPauses  && rl.IsKeyDown(int32(rl.KEY_P)) {
-		lastPauseTime = time.Now()
-		Pause = !Pause
-	}
-
-	if Debug && time.Since(lastSlowTime) > TimeBetweenSlow  && rl.IsKeyDown(int32(rl.KEY_M)) {
-		lastSlowTime = time.Now()
-		Slow = !Slow
-	}
-
-	if !Pause {
-		if rl.IsKeyDown(int32(rl.KEY_A)) {
-			g.player.velocity.X -= PlayerSpeed
-		}
-
-		if rl.IsKeyDown(int32(rl.KEY_D)) {
+func (g *Game) HandleEvents() {
+	for i := 0; i < len(g.inputManager.events); i++ {
+		switch e := g.inputManager.events[i]; e {
+		case "pause":
+			Pause = !Pause
+		case "move_right":
 			g.player.velocity.X += PlayerSpeed
-		}
-
-		if g.player.canJump && rl.IsKeyDown(int32(rl.KEY_SPACE)) {
-			g.player.canJump = false
-			g.player.velocity.Y -= PlayerJumpSpeed
-		}
-
-		if rl.IsKeyDown(int32(rl.KEY_ENTER)) {
+		case "move_left":
+			g.player.velocity.X -= PlayerSpeed
+		case "jump":
+			if g.player.canJump {
+				g.player.canJump = false
+				g.player.velocity.Y -= PlayerJumpSpeed
+			}
+		case "hook":
 			if !g.player.hookLaunched {
 				g.player.hook = NewHook(*g.player)
 				g.player.hookLaunched = true
 			}
-		}
-
-		if rl.IsKeyUp(int32(rl.KEY_ENTER)) {
+		case "stop_hook":
 			g.player.hookLaunched = false
+		default:
+			// Unknown event
 		}
 	}
 }
