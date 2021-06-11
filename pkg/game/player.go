@@ -30,7 +30,7 @@ func (p *Player) Update(deltaTime float32) {
 			p.hookVelocity.X = dir.X * HookHorizontalForce
 			p.hookVelocity.Y = dir.Y * HookVerticalForce
 
-			// The hook as more power to drag you up then down. This makes it easier to get on top of an platform
+			// The hook as more power to drag you up then down. This makes it easier to get on top of a platform
 			if p.hookVelocity.Y > 0 {
 				p.hookVelocity.Y *= 0.3
 			}
