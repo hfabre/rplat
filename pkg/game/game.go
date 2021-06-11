@@ -26,7 +26,7 @@ var Pause = false
 
 type Game struct {
 	player *Player
-	walls []rl.Rectangle
+	level Map
 	currentTime float64
 	dt float64
 	time float64
@@ -36,28 +36,27 @@ type Game struct {
 
 func NewGame() Game {
 	player := Player{
-		pos:      rl.Vector2{20, 20},
+		pos:      rl.Vector2{32, 32},
 		lastPos:  rl.Vector2{20, 20},
 		velocity: rl.Vector2{0, 0},
 		lastVelocity: rl.Vector2{0, 0},
 		size:     rl.Vector2{32, 64},
 		canJump: true,
-		color: rl.Green,
+		color: rl.Red,
 	}
 
-	walls := make([]rl.Rectangle, 3)
-	walls[0] = rl.Rectangle{0, 688, 1280, 32}
-	walls[1] = rl.Rectangle{500, 530, 280, 32}
-	walls[2] = rl.Rectangle{0, 200, 500, 32}
-
-	g := Game{player: &player, walls: walls, currentTime: rl.GetTime(), dt: 0.01, inputManager: NewInputManager()}
+	g := Game{player: &player, currentTime: rl.GetTime(), dt: 0.01, inputManager: NewInputManager()}
 
 	return g
 }
 
-func (g Game) Run() {
+func (g *Game) Run() {
 	rl.InitWindow(ScreenWidth, ScreenHeight, "rplat")
 	defer rl.CloseWindow()
+
+	mc := NewMapConfiguration("./assets/map.json")
+	tileset := NewTileset("./assets/tileset.png", mc.TileWidth, mc.TileHeight)
+	g.level = NewMap(mc, tileset)
 
 	rl.SetTargetFPS(FPS)
 
@@ -132,14 +131,14 @@ func (g *Game) Update(deltaTime float32) {
 	g.player.Update(deltaTime)
 
 	// Resolve collisions
-	for i := 0; i < len(g.walls); i++ {
-		if rl.CheckCollisionRecs(g.player.Rectangle(), g.walls[i]) {
-			g.player.SolveCollision(g.walls[i])
+	for i := 0; i < len(g.level.walls); i++ {
+		if rl.CheckCollisionRecs(g.player.Rectangle(), g.level.walls[i]) {
+			g.player.SolveCollision(g.level.walls[i])
 		}
 
 		if g.player.hookLaunched {
-			if rl.CheckCollisionRecs(g.player.hook.Rectangle(), g.walls[i]) {
-				g.player.hook.SolveCollision(g.walls[i])
+			if rl.CheckCollisionRecs(g.player.hook.Rectangle(), g.level.walls[i]) {
+				g.player.hook.SolveCollision(g.level.walls[i])
 			}
 		}
 	}
@@ -151,9 +150,7 @@ func (g Game) Draw(factor float64) {
 
 	rl.ClearBackground(rl.RayWhite)
 
-	for i := 0; i < len(g.walls); i++ {
-		rl.DrawRectangleRec(g.walls[i], rl.Gray)
-	}
+	g.level.Draw()
 
 	currentStateLerp := LerpVec2(g.player.pos, factor)
 	lastStateLerp := LerpVec2(g.player.pos, 1 - factor)
