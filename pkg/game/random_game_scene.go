@@ -3,8 +3,6 @@ package game
 import (
 	"fmt"
 	rl "github.com/chunqian/go-raylib/raylib"
-	"log"
-	"sync"
 	"time"
 )
 
@@ -22,7 +20,7 @@ const Gravity = 10
 
 // Workaround to be able to call methods on a pointer on my interface
 type RandGameSceneWrapper struct {
-	rgs RandomGameScene
+	rgs *RandomGameScene
 }
 
 func NewRandGameSceneWrapper () RandGameSceneWrapper {
@@ -62,17 +60,13 @@ type RandomGameScene struct {
 	player *Player
 	level Map
 	inputManager *InputManager
-	firstTick time.Time
 	elapsedSeconds int
-	timerEnded bool
 	ticker *time.Ticker
-	timerChan chan int
-	initTicker bool
-	sync.Mutex
+	durationSeconds int
 }
 
-func NewRandomGameScene() RandomGameScene {
-	rgs := RandomGameScene{}
+func NewRandomGameScene() *RandomGameScene {
+	rgs := &RandomGameScene{}
 
 	player := Player{
 		pos:      rl.Vector2{32, 32},
@@ -84,6 +78,7 @@ func NewRandomGameScene() RandomGameScene {
 		color: rl.Red,
 	}
 
+
 	rgs.player = &player
 
 	// Load level
@@ -94,9 +89,10 @@ func NewRandomGameScene() RandomGameScene {
 	im := NewInputManager()
 	rgs.inputManager = &im
 
+	rgs.durationSeconds = 30
+
 	// TODO: Add an init function
 	rgs.ticker = time.NewTicker(1 * time.Second)
-	rgs.timerChan = make(chan int)
 	go rgs.StartsCounter()
 
 	return rgs
@@ -132,34 +128,20 @@ func (rgs *RandomGameScene) HandleEvents() {
 		case "stop_hook":
 			rgs.player.hookLaunched = false
 		default:
-			// Unknown event
+			// Unknown event suce des zizi
 		}
 	}
 }
 
 func (rgs *RandomGameScene) StartsCounter() {
 	for _ = range rgs.ticker.C {
-		rgs.timerChan <- 1
+		rgs.elapsedSeconds++
 	}
 }
 
 func (rgs *RandomGameScene) Update(deltaTime float32) {
-	select {
-	case <- rgs.timerChan:
-		println("tick")
-		println(rgs.elapsedSeconds)
-		rgs.elapsedSeconds++
-		println(rgs.elapsedSeconds)
-		log.Printf("%v", rgs)
-	default:
-	}
-
-	println(rgs.elapsedSeconds)
-
-	if rgs.elapsedSeconds >= 30 {
-		rgs.timerEnded = true
+	if rgs.elapsedSeconds >= rgs.durationSeconds {
 		rgs.ticker.Stop()
-		close(rgs.timerChan)
 		Pause = true
 	}
 
@@ -206,7 +188,7 @@ func (rgs RandomGameScene) Draw(factor float64) {
 		rl.DrawLineEx(rgs.player.pos, rgs.player.hook.pos, 5, rl.Black)
 	}
 
-	timeText := fmt.Sprintf("Remaning time: %v", rgs.elapsedSeconds)
+	timeText := fmt.Sprintf("Elapsed time: %v", rgs.elapsedSeconds)
 	rl.DrawText(timeText, 500, 20, 40, rl.Black)
 
 	if Debug {
