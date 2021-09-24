@@ -3,6 +3,8 @@ package game
 import (
 	"fmt"
 	rl "github.com/chunqian/go-raylib/raylib"
+	"log"
+	"sync"
 	"time"
 )
 
@@ -65,6 +67,8 @@ type RandomGameScene struct {
 	timerEnded bool
 	ticker *time.Ticker
 	timerChan chan int
+	initTicker bool
+	sync.Mutex
 }
 
 func NewRandomGameScene() RandomGameScene {
@@ -89,8 +93,12 @@ func NewRandomGameScene() RandomGameScene {
 
 	im := NewInputManager()
 	rgs.inputManager = &im
+
+	// TODO: Add an init function
 	rgs.ticker = time.NewTicker(1 * time.Second)
 	rgs.timerChan = make(chan int)
+	go rgs.StartsCounter()
+
 	return rgs
 }
 
@@ -136,16 +144,13 @@ func (rgs *RandomGameScene) StartsCounter() {
 }
 
 func (rgs *RandomGameScene) Update(deltaTime float32) {
-	if rgs.elapsedSeconds == 0 {
-		go rgs.StartsCounter()
-	}
-
 	select {
 	case <- rgs.timerChan:
 		println("tick")
 		println(rgs.elapsedSeconds)
-		rgs.elapsedSeconds = rgs.elapsedSeconds + 1
+		rgs.elapsedSeconds++
 		println(rgs.elapsedSeconds)
+		log.Printf("%v", rgs)
 	default:
 	}
 
