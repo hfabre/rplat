@@ -3,6 +3,7 @@ package game
 import (
 	"fmt"
 	rl "github.com/chunqian/go-raylib/raylib"
+	"time"
 )
 
 const FPS = 500
@@ -59,6 +60,11 @@ type RandomGameScene struct {
 	player *Player
 	level Map
 	inputManager *InputManager
+	firstTick time.Time
+	elapsedSeconds int
+	timerEnded bool
+	ticker *time.Ticker
+	timerChan chan int
 }
 
 func NewRandomGameScene() RandomGameScene {
@@ -83,6 +89,8 @@ func NewRandomGameScene() RandomGameScene {
 
 	im := NewInputManager()
 	rgs.inputManager = &im
+	rgs.ticker = time.NewTicker(1 * time.Second)
+	rgs.timerChan = make(chan int)
 	return rgs
 }
 
@@ -121,7 +129,35 @@ func (rgs *RandomGameScene) HandleEvents() {
 	}
 }
 
+func (rgs *RandomGameScene) StartsCounter() {
+	for _ = range rgs.ticker.C {
+		rgs.timerChan <- 1
+	}
+}
+
 func (rgs *RandomGameScene) Update(deltaTime float32) {
+	if rgs.elapsedSeconds == 0 {
+		go rgs.StartsCounter()
+	}
+
+	select {
+	case <- rgs.timerChan:
+		println("tick")
+		println(rgs.elapsedSeconds)
+		rgs.elapsedSeconds = rgs.elapsedSeconds + 1
+		println(rgs.elapsedSeconds)
+	default:
+	}
+
+	println(rgs.elapsedSeconds)
+
+	if rgs.elapsedSeconds >= 30 {
+		rgs.timerEnded = true
+		rgs.ticker.Stop()
+		close(rgs.timerChan)
+		Pause = true
+	}
+
 	if !Pause {
 		rgs.player.color = rl.Green
 		rgs.player.lastPos = rgs.player.pos
@@ -164,6 +200,9 @@ func (rgs RandomGameScene) Draw(factor float64) {
 
 		rl.DrawLineEx(rgs.player.pos, rgs.player.hook.pos, 5, rl.Black)
 	}
+
+	timeText := fmt.Sprintf("Remaning time: %v", rgs.elapsedSeconds)
+	rl.DrawText(timeText, 500, 20, 40, rl.Black)
 
 	if Debug {
 		if Pause {
