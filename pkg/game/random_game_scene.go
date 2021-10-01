@@ -3,6 +3,7 @@ package game
 import (
 	"fmt"
 	rl "github.com/chunqian/go-raylib/raylib"
+	"time"
 )
 
 const FPS = 500
@@ -19,7 +20,7 @@ const Gravity = 10
 
 // Workaround to be able to call methods on a pointer on my interface
 type RandGameSceneWrapper struct {
-	rgs RandomGameScene
+	rgs *RandomGameScene
 }
 
 func NewRandGameSceneWrapper () RandGameSceneWrapper {
@@ -59,10 +60,13 @@ type RandomGameScene struct {
 	player *Player
 	level Map
 	inputManager *InputManager
+	elapsedSeconds int
+	ticker *time.Ticker
+	durationSeconds int
 }
 
-func NewRandomGameScene() RandomGameScene {
-	rgs := RandomGameScene{}
+func NewRandomGameScene() *RandomGameScene {
+	rgs := &RandomGameScene{}
 
 	player := Player{
 		pos:      rl.Vector2{32, 32},
@@ -74,6 +78,7 @@ func NewRandomGameScene() RandomGameScene {
 		color: rl.Red,
 	}
 
+
 	rgs.player = &player
 
 	// Load level
@@ -83,6 +88,13 @@ func NewRandomGameScene() RandomGameScene {
 
 	im := NewInputManager()
 	rgs.inputManager = &im
+
+	rgs.durationSeconds = 30
+
+	// TODO: Add an init function
+	rgs.ticker = time.NewTicker(1 * time.Second)
+	go rgs.StartsCounter()
+
 	return rgs
 }
 
@@ -116,12 +128,23 @@ func (rgs *RandomGameScene) HandleEvents() {
 		case "stop_hook":
 			rgs.player.hookLaunched = false
 		default:
-			// Unknown event
+			// Unknown event suce des zizi
 		}
 	}
 }
 
+func (rgs *RandomGameScene) StartsCounter() {
+	for _ = range rgs.ticker.C {
+		rgs.elapsedSeconds++
+	}
+}
+
 func (rgs *RandomGameScene) Update(deltaTime float32) {
+	if rgs.elapsedSeconds >= rgs.durationSeconds {
+		rgs.ticker.Stop()
+		Pause = true
+	}
+
 	if !Pause {
 		rgs.player.color = rl.Green
 		rgs.player.lastPos = rgs.player.pos
@@ -164,6 +187,9 @@ func (rgs RandomGameScene) Draw(factor float64) {
 
 		rl.DrawLineEx(rgs.player.pos, rgs.player.hook.pos, 5, rl.Black)
 	}
+
+	timeText := fmt.Sprintf("Elapsed time: %v", rgs.elapsedSeconds)
+	rl.DrawText(timeText, 500, 20, 40, rl.Black)
 
 	if Debug {
 		if Pause {

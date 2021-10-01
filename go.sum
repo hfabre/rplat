@@ -2,5 +2,7 @@ github.com/chunqian/go-raylib v0.0.0-20210322143257-7fdd615788b9 h1:UC689kKlhWkv
 github.com/chunqian/go-raylib v0.0.0-20210322143257-7fdd615788b9/go.mod h1:lO53v7LghC9S1kSY0uiohepLDmHbbntnQbOga2+px54=
 github.com/chunqian/go-raylib v0.0.0-20210327031704-6ee277f768c6 h1:+Utzzy9tPKoN6huWSoHqOMJtdXrZqBB264KMvRLLVSU=
 github.com/chunqian/go-raylib v0.0.0-20210327031704-6ee277f768c6/go.mod h1:lO53v7LghC9S1kSY0uiohepLDmHbbntnQbOga2+px54=
+github.com/chunqian/go-raylib v0.0.0-20210830103051-4bef66ade750 h1:J/ahD/o90Thy2epTo9FWe15h1Hmd1jlIqju1phqX8ms=
+github.com/chunqian/go-raylib v0.0.0-20210830103051-4bef66ade750/go.mod h1:lO53v7LghC9S1kSY0uiohepLDmHbbntnQbOga2+px54=
 github.com/lachee/raylib-goplus v0.0.0-20200127004607-0ab9540a7320 h1:9Ob2OsBKzS7odiu3b03HH4zvDobqkMDEIrP0+sW7wh0=
 github.com/lachee/raylib-goplus v0.0.0-20200127004607-0ab9540a7320/go.mod h1:dBwvFApqhdnnQuWzvHZnvWph/zlTAHC3nd/Hy6yBE8U=
