@@ -4,21 +4,22 @@ import (
 	rl "github.com/chunqian/go-raylib/raylib"
 )
 
-
 const ScreenWidth = 1280
-const ScreenHeight = 720
+const ScreenHeight = 700
+const FPS = 120
 
 // Debug
 const Debug = true
+
 var Pause = false
 
 type Game struct {
-	currentTime float64
-	dt float64
-	time float64
-	accumulator float64
+	currentTime  float64
+	dt           float64
+	time         float64
+	accumulator  float64
 	inputManager InputManager
-	sm SceneManager
+	sm           SceneManager
 }
 
 func NewGame() Game {
@@ -37,7 +38,7 @@ func (g *Game) Run() {
 
 	scenes := make(map[string]Scene)
 	scenes["random_game"] = NewRandGameSceneWrapper()
-	g.sm = SceneManager{ scenes: scenes, currentSceneName: "random_game"}
+	g.sm = SceneManager{scenes: scenes, currentSceneName: "random_game"}
 
 	rl.SetTargetFPS(FPS)
 
