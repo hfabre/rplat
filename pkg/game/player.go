@@ -1,13 +1,25 @@
 package game
 
-import rl "github.com/chunqian/go-raylib/raylib"
+import (
+	"time"
+
+	rl "github.com/chunqian/go-raylib/raylib"
+)
+
+const Friction = 0.80
+const Gravity = 10
+
+const PlayerSpeed = 100
+const PlayerJumpSpeed = 550
+const DashForce = 8
+const DashCooldown = 500
 
 type Player struct {
 	pos, lastPos, velocity, lastVelocity, hookVelocity, size rl.Vector2
-	canJump, hookLaunched bool
-	collision rl.Rectangle
-	color rl.Color
-	hook Hook
+	canJump, hookLaunched                                    bool
+	color                                                    rl.Color
+	hook                                                     Hook
+	last_dash_time                                           int64
 }
 
 func (p Player) Rectangle() rl.Rectangle {
@@ -20,6 +32,29 @@ func (p Player) Rectangle() rl.Rectangle {
 	}
 }
 
+func (p *Player) MoveRight() {
+	p.velocity.X += PlayerSpeed
+}
+
+func (p *Player) MoveLeft() {
+	p.velocity.X -= PlayerSpeed
+}
+
+func (p *Player) Jump() {
+	if p.canJump {
+		p.canJump = false
+		p.velocity.Y -= PlayerJumpSpeed
+	}
+}
+
+func (p *Player) Dash() {
+	current_time := time.Now().UnixNano() / int64(time.Millisecond)
+
+	if current_time-p.last_dash_time > DashCooldown {
+		p.last_dash_time = current_time
+		p.velocity.X = p.velocity.X * DashForce
+	}
+}
 
 // Note: Hook physics is heavily inspired by Teeworlds, see:
 // https://github.com/teeworlds/teeworlds/blob/b0c4c7002b28ee195934281e524f163f7ed30c59/src/game/gamecore.cpp#L263
@@ -62,39 +97,22 @@ func (p *Player) Update(deltaTime float32) {
 	p.pos.Y += p.velocity.Y * deltaTime
 }
 
-func (p *Player) SolveCollision(wall rl.Rectangle) {
+func (p *Player) SolveCollision(wall rl.Rectangle, direction string) {
 	p.color = rl.Red
-	collision := rl.GetCollisionRec(p.Rectangle(), wall)
 
-	// If collision is too small just ignore it
-	// It avoid having a bug where shallow axis is not the expected one on very small values
-	if collision.Width < 1 && collision.Height < 1 {
-		return
-	}
-
-	p.collision = collision
-
-	// Perform collision resolution on shallow axis
-	// Shallow axis is the less penetrated, so here Y axis
-	if collision.Width > collision.Height {
-
-		// If the player is going down
-		if p.velocity.Y > 0 {
-			p.canJump = true
-			p.pos.Y = collision.Y - p.size.Y
-		} else {
-			p.pos.Y = collision.Y + collision.Height
-		}
-
+	switch direction {
+	case "bottom":
+		p.canJump = true
+		p.pos.Y = wall.Y - p.size.Y
 		p.velocity.Y = 0
-	} else {
-		// If the player is going right
-		if p.velocity.X > 0 {
-			p.pos.X = collision.X - p.size.X
-		} else {
-			p.pos.X = collision.X + collision.Width
-		}
-
+	case "right":
+		p.pos.X = wall.X + wall.Width
 		p.velocity.X = 0
+	case "left":
+		p.pos.X = wall.X - p.size.X
+		p.velocity.X = 0
+	case "top":
+		p.pos.Y = wall.Y + wall.Height
+		p.velocity.Y = 0
 	}
 }

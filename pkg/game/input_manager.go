@@ -1,8 +1,9 @@
 package game
 
 import (
-	rl "github.com/chunqian/go-raylib/raylib"
 	"time"
+
+	rl "github.com/chunqian/go-raylib/raylib"
 )
 
 var TimeBetweenPauses = 100 * time.Millisecond
@@ -10,7 +11,7 @@ var lastPauseTime = time.Now()
 
 type InputManager struct {
 	inputMap map[string]int32
-	events []string
+	events   []string
 }
 
 func NewInputManager() InputManager {
@@ -22,6 +23,7 @@ func NewInputManager() InputManager {
 	m["move_right"] = int32(rl.KEY_D)
 	m["hook"] = int32(rl.KEY_ENTER)
 	m["mouse_hook"] = int32(rl.MOUSE_RIGHT_BUTTON)
+	m["dash"] = int32(rl.KEY_LEFT_SHIFT)
 
 	im.inputMap = m
 	return im
@@ -30,7 +32,7 @@ func NewInputManager() InputManager {
 func (im *InputManager) Update() {
 	kbHook := false
 
-	if Debug && time.Since(lastPauseTime) > TimeBetweenPauses  && rl.IsKeyDown(int32(rl.KEY_P)) {
+	if Debug && time.Since(lastPauseTime) > TimeBetweenPauses && rl.IsKeyDown(int32(rl.KEY_P)) {
 		lastPauseTime = time.Now()
 		im.events = append(im.events, "pause")
 	}
@@ -63,6 +65,10 @@ func (im *InputManager) Update() {
 
 		if rl.IsMouseButtonUp(im.inputMap["mouse_hook"]) && !kbHook {
 			im.events = append(im.events, "stop_hook")
+		}
+
+		if rl.IsKeyDown(im.inputMap["dash"]) {
+			im.events = append(im.events, "dash")
 		}
 	}
 }

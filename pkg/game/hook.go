@@ -4,8 +4,8 @@ import rl "github.com/chunqian/go-raylib/raylib"
 
 type Hook struct {
 	pos, lastPos, velocity, size rl.Vector2
-	hooked bool
-	color rl.Color
+	hooked                       bool
+	color                        rl.Color
 }
 
 func NewHook(player Player) Hook {
@@ -16,8 +16,8 @@ func NewHook(player Player) Hook {
 		lastPos:  player.pos,
 		velocity: rl.Vector2{dir.X * HookSpeed, dir.Y * HookSpeed},
 		size:     rl.Vector2{32, 32},
-		hooked: false,
-		color: rl.Orange,
+		hooked:   false,
+		color:    rl.Orange,
 	}
 }
 
@@ -31,30 +31,20 @@ func (h Hook) Rectangle() rl.Rectangle {
 	}
 }
 
-func (h *Hook) SolveCollision (wall rl.Rectangle) {
-	h.color = rl.Purple
-	collision := rl.GetCollisionRec(h.Rectangle(), wall)
-
-	// If collision is too small just ignore it
-	// It avoid having a bug where shallow axis is not the expected one on very small values
-	if collision.Width < 1 && collision.Height < 1 {
-		return
-	}
-
-	if collision.Width > collision.Height {
-
-		// If the hook is going down
-		if h.velocity.Y > 0 {
-			h.pos.Y = collision.Y - h.size.Y
-		} else {
-			h.pos.Y = collision.Y + collision.Height
-		}
-	} else {
-		if h.velocity.X > 0 {
-			h.pos.X = collision.X - h.size.X
-		} else {
-			h.pos.X = collision.X + collision.Width
-		}
+func (h *Hook) SolveCollision(wall rl.Rectangle, direction string) {
+	switch direction {
+	case "bottom":
+		h.pos.Y = wall.Y - h.size.Y
+		h.velocity.Y = 0
+	case "right":
+		h.pos.X = wall.X + wall.Width
+		h.velocity.X = 0
+	case "left":
+		h.pos.X = wall.X - h.size.X
+		h.velocity.X = 0
+	case "top":
+		h.pos.Y = wall.Y + wall.Height
+		h.velocity.Y = 0
 	}
 
 	h.velocity.X = 0
