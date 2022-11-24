@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"math/rand"
 	"time"
 
 	rl "github.com/chunqian/go-raylib/raylib"
@@ -55,6 +56,9 @@ type RandomGameScene struct {
 	elapsedSeconds  int
 	ticker          *time.Ticker
 	durationSeconds int
+	stars           []Star
+	score           int
+	printScore      bool
 }
 
 func NewRandomGameScene() *RandomGameScene {
@@ -81,12 +85,42 @@ func NewRandomGameScene() *RandomGameScene {
 	rgs.inputManager = &im
 
 	rgs.durationSeconds = 30
+	rgs.printScore = false
 
 	// TODO: Add an init function
 	rgs.ticker = time.NewTicker(1 * time.Second)
 	go rgs.StartsCounter()
 
+	for i := 0; i < 20; i++ {
+		for !rgs.SpawnStar() {
+		}
+	}
+
 	return rgs
+}
+
+func (rgs *RandomGameScene) SpawnStar() bool {
+	s := rand.NewSource(time.Now().UnixNano())
+	r := rand.New(s)
+	x := r.Intn(ScreenWidth)
+	y := r.Intn(ScreenHeight)
+
+	star := Star{rl.Vector2{X: float32(x), Y: float32(y)}}
+
+	for _, wall := range rgs.level.walls {
+		if isColliding(star.Rectangle(), wall) {
+			return false
+		}
+	}
+
+	for _, exStar := range rgs.stars {
+		if isColliding(star.Rectangle(), exStar.Rectangle()) {
+			return false
+		}
+	}
+
+	rgs.stars = append(rgs.stars, star)
+	return true
 }
 
 func (rgs *RandomGameScene) UpdateInputs() {
@@ -124,13 +158,25 @@ func (rgs *RandomGameScene) HandleEvents() {
 
 func (rgs *RandomGameScene) StartsCounter() {
 	for _ = range rgs.ticker.C {
-		rgs.elapsedSeconds++
+		if !Pause {
+			rgs.elapsedSeconds++
+		}
+	}
+}
+
+func (rgs *RandomGameScene) EndGame(complete bool) {
+	Pause = true
+	rgs.printScore = true
+
+	if complete {
+		multiplier := rgs.durationSeconds - rgs.elapsedSeconds
+		rgs.score *= multiplier
 	}
 }
 
 func (rgs *RandomGameScene) Update(deltaTime float32) {
 	if rgs.elapsedSeconds >= rgs.durationSeconds {
-		// Game finished
+		rgs.EndGame(false)
 	}
 
 	if !Pause {
@@ -156,14 +202,27 @@ func (rgs *RandomGameScene) Update(deltaTime float32) {
 
 			if rgs.player.portal.status == "ended" {
 				if isColliding(rgs.player.Rectangle(), rgs.player.portal.EntryRectangle()) {
+					rgs.player.StopHook()
 					rgs.player.Teleport(rgs.player.portal.exit_pos)
 				}
 			}
 		}
 
-		// if rl.Vector2Distance(rgs.player.lastPos, rgs.player.pos) > 10 {
-		// 	Pause = true
-		// }
+		starsToRemove := []int{}
+		for i, star := range rgs.stars {
+			if isColliding(rgs.player.Rectangle(), star.Rectangle()) {
+				rgs.score += 10
+				starsToRemove = append(starsToRemove, i)
+			}
+		}
+
+		for _, j := range starsToRemove {
+			rgs.stars = RemoveIndexStar(rgs.stars, j)
+		}
+
+		if len(rgs.stars) == 0 {
+			rgs.EndGame(true)
+		}
 	}
 }
 
@@ -195,8 +254,17 @@ func (rgs RandomGameScene) Draw(factor float64) {
 		rl.DrawRectangleV(rgs.player.portal.exit_pos, rl.Vector2{PortalWidth, PortalHeight}, rl.Brown)
 	}
 
+	for _, star := range rgs.stars {
+		rl.DrawRectangleRec(star.Rectangle(), rl.Yellow)
+	}
+
 	timeText := fmt.Sprintf("Elapsed time: %v", rgs.elapsedSeconds)
 	rl.DrawText(timeText, 500, 20, 40, rl.Black)
+
+	if rgs.printScore {
+		timeText := fmt.Sprintf("Score: %v", rgs.score)
+		rl.DrawText(timeText, 500, 60, 40, rl.Black)
+	}
 
 	if Debug {
 		if Pause {
