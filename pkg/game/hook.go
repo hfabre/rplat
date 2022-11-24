@@ -2,6 +2,8 @@ package game
 
 import rl "github.com/chunqian/go-raylib/raylib"
 
+const HookSpeed = 1800
+
 type Hook struct {
 	pos, lastPos, velocity, size rl.Vector2
 	hooked                       bool

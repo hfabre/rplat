@@ -13,13 +13,15 @@ const PlayerSpeed = 100
 const PlayerJumpSpeed = 550
 const DashForce = 8
 const DashCooldown = 500
+const PortalCooldown = 500
 
 type Player struct {
 	pos, lastPos, velocity, lastVelocity, hookVelocity, size rl.Vector2
 	canJump, hookLaunched                                    bool
 	color                                                    rl.Color
 	hook                                                     Hook
-	last_dash_time                                           int64
+	last_dash_time, last_portal_time                         int64
+	portal                                                   Portal
 }
 
 func (p Player) Rectangle() rl.Rectangle {
@@ -54,6 +56,48 @@ func (p *Player) Dash() {
 		p.last_dash_time = current_time
 		p.velocity.X = p.velocity.X * DashForce
 	}
+}
+
+func (p *Player) Hook() {
+	if !p.hookLaunched {
+		p.hook = NewHook(*p)
+		p.hookLaunched = true
+	}
+}
+
+func (p *Player) StopHook() {
+	p.hookLaunched = false
+}
+
+func (p *Player) FirePortal(walls []rl.Rectangle) {
+	current_time := time.Now().UnixNano() / int64(time.Millisecond)
+
+	if current_time-p.last_portal_time > PortalCooldown {
+		p.last_portal_time = current_time
+		portal_box := p.Rectangle()
+		dir := DirectionVectorFromVectors(p.pos, rl.GetMousePosition())
+		velocity := rl.Vector2{dir.X * 10, dir.Y * 10}
+
+		// TODO: impl Ray -> AABB collision
+		for j := 0; j < 10000; j++ {
+			for i := 0; i < len(walls); i++ {
+				if isColliding(portal_box, walls[i]) {
+					direction := collisionDirection(portal_box, walls[i])
+					SolvePortalCollision(&portal_box, walls[i], direction)
+					p.portal.Trigger(rl.Vector2{X: portal_box.X, Y: portal_box.Y})
+					return
+				}
+			}
+
+			portal_box.X += velocity.X
+			portal_box.Y += velocity.Y
+		}
+	}
+}
+
+func (p *Player) Teleport(pos rl.Vector2) {
+	p.pos.X = pos.X
+	p.pos.Y = pos.Y
 }
 
 // Note: Hook physics is heavily inspired by Teeworlds, see:

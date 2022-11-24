@@ -7,7 +7,6 @@ import (
 	rl "github.com/chunqian/go-raylib/raylib"
 )
 
-const HookSpeed = 1800
 const HookVerticalForce = 30
 const HookHorizontalForce = 60
 
@@ -110,14 +109,13 @@ func (rgs *RandomGameScene) HandleEvents() {
 		case "jump":
 			rgs.player.Jump()
 		case "hook":
-			if !rgs.player.hookLaunched {
-				rgs.player.hook = NewHook(*rgs.player)
-				rgs.player.hookLaunched = true
-			}
+			rgs.player.Hook()
 		case "stop_hook":
-			rgs.player.hookLaunched = false
+			rgs.player.StopHook()
 		case "dash":
 			rgs.player.Dash()
+		case "portal":
+			rgs.player.FirePortal(rgs.level.walls)
 		default:
 			// Unknown event
 		}
@@ -155,6 +153,12 @@ func (rgs *RandomGameScene) Update(deltaTime float32) {
 					rgs.player.hook.SolveCollision(rgs.level.walls[i], direction)
 				}
 			}
+
+			if rgs.player.portal.status == "ended" {
+				if isColliding(rgs.player.Rectangle(), rgs.player.portal.EntryRectangle()) {
+					rgs.player.Teleport(rgs.player.portal.exit_pos)
+				}
+			}
 		}
 
 		// if rl.Vector2Distance(rgs.player.lastPos, rgs.player.pos) > 10 {
@@ -181,6 +185,14 @@ func (rgs RandomGameScene) Draw(factor float64) {
 		rl.DrawRectangleV(rl.Vector2{currentStateLerp.X + lastStateLerp.X, currentStateLerp.Y + lastStateLerp.Y}, rgs.player.hook.size, rgs.player.hook.color)
 
 		rl.DrawLineEx(rgs.player.pos, rgs.player.hook.pos, 5, rl.Black)
+	}
+
+	switch rgs.player.portal.status {
+	case "triggered":
+		rl.DrawRectangleV(rgs.player.portal.entry_pos, rl.Vector2{PortalWidth, PortalHeight}, rl.Blue)
+	case "ended":
+		rl.DrawRectangleV(rgs.player.portal.entry_pos, rl.Vector2{PortalWidth, PortalHeight}, rl.Blue)
+		rl.DrawRectangleV(rgs.player.portal.exit_pos, rl.Vector2{PortalWidth, PortalHeight}, rl.Brown)
 	}
 
 	timeText := fmt.Sprintf("Elapsed time: %v", rgs.elapsedSeconds)
