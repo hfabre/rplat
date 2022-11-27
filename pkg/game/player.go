@@ -141,6 +141,29 @@ func (p *Player) Update(deltaTime float32) {
 	p.pos.Y += p.velocity.Y * deltaTime
 }
 
+func (p *Player) checkAndHandleCollisions(walls []rl.Rectangle) {
+	for i := 0; i < len(walls); i++ {
+		if isColliding(p.Rectangle(), walls[i]) {
+			direction := collisionDirection(p.Rectangle(), walls[i])
+			p.SolveCollision(walls[i], direction)
+		}
+
+		if p.hookLaunched {
+			if isColliding(p.hook.Rectangle(), walls[i]) {
+				direction := collisionDirection(p.hook.Rectangle(), walls[i])
+				p.hook.SolveCollision(walls[i], direction)
+			}
+		}
+
+		if p.portal.status == "ended" {
+			if isColliding(p.Rectangle(), p.portal.EntryRectangle()) {
+				p.StopHook()
+				p.Teleport(p.portal.exit_pos)
+			}
+		}
+	}
+}
+
 func (p *Player) SolveCollision(wall rl.Rectangle, direction string) {
 	p.color = rl.Red
 

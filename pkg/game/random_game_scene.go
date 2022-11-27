@@ -65,11 +65,11 @@ func NewRandomGameScene() *RandomGameScene {
 	rgs := &RandomGameScene{}
 
 	player := Player{
-		pos:          rl.Vector2{32, 32},
-		lastPos:      rl.Vector2{20, 20},
-		velocity:     rl.Vector2{0, 0},
-		lastVelocity: rl.Vector2{0, 0},
-		size:         rl.Vector2{32, 64},
+		pos:          rl.Vector2{X: 32, Y: 32},
+		lastPos:      rl.Vector2{X: 20, Y: 20},
+		velocity:     rl.Vector2{X: 0, Y: 0},
+		lastVelocity: rl.Vector2{X: 0, Y: 0},
+		size:         rl.Vector2{X: 32, Y: 64},
 		canJump:      true,
 		color:        rl.Red,
 	}
@@ -157,7 +157,7 @@ func (rgs *RandomGameScene) HandleEvents() {
 }
 
 func (rgs *RandomGameScene) StartsCounter() {
-	for _ = range rgs.ticker.C {
+	for range rgs.ticker.C {
 		if !Pause {
 			rgs.elapsedSeconds++
 		}
@@ -185,28 +185,7 @@ func (rgs *RandomGameScene) Update(deltaTime float32) {
 		rgs.player.lastVelocity = rgs.player.velocity
 
 		rgs.player.Update(deltaTime)
-
-		// Resolve collisions
-		for i := 0; i < len(rgs.level.walls); i++ {
-			if isColliding(rgs.player.Rectangle(), rgs.level.walls[i]) {
-				direction := collisionDirection(rgs.player.Rectangle(), rgs.level.walls[i])
-				rgs.player.SolveCollision(rgs.level.walls[i], direction)
-			}
-
-			if rgs.player.hookLaunched {
-				if isColliding(rgs.player.hook.Rectangle(), rgs.level.walls[i]) {
-					direction := collisionDirection(rgs.player.hook.Rectangle(), rgs.level.walls[i])
-					rgs.player.hook.SolveCollision(rgs.level.walls[i], direction)
-				}
-			}
-
-			if rgs.player.portal.status == "ended" {
-				if isColliding(rgs.player.Rectangle(), rgs.player.portal.EntryRectangle()) {
-					rgs.player.StopHook()
-					rgs.player.Teleport(rgs.player.portal.exit_pos)
-				}
-			}
-		}
+		rgs.player.checkAndHandleCollisions(rgs.level.walls)
 
 		starsToRemove := []int{}
 		for i, star := range rgs.stars {
@@ -236,22 +215,22 @@ func (rgs RandomGameScene) Draw(factor float64) {
 
 	currentStateLerp := LerpVec2(rgs.player.pos, factor)
 	lastStateLerp := LerpVec2(rgs.player.pos, 1-factor)
-	rl.DrawRectangleV(rl.Vector2{currentStateLerp.X + lastStateLerp.X, currentStateLerp.Y + lastStateLerp.Y}, rgs.player.size, rgs.player.color)
+	rl.DrawRectangleV(rl.Vector2{X: currentStateLerp.X + lastStateLerp.X, Y: currentStateLerp.Y + lastStateLerp.Y}, rgs.player.size, rgs.player.color)
 
 	if rgs.player.hookLaunched {
 		currentStateLerp = LerpVec2(rgs.player.hook.pos, factor)
 		lastStateLerp = LerpVec2(rgs.player.hook.pos, 1-factor)
-		rl.DrawRectangleV(rl.Vector2{currentStateLerp.X + lastStateLerp.X, currentStateLerp.Y + lastStateLerp.Y}, rgs.player.hook.size, rgs.player.hook.color)
+		rl.DrawRectangleV(rl.Vector2{X: currentStateLerp.X + lastStateLerp.X, Y: currentStateLerp.Y + lastStateLerp.Y}, rgs.player.hook.size, rgs.player.hook.color)
 
 		rl.DrawLineEx(rgs.player.pos, rgs.player.hook.pos, 5, rl.Black)
 	}
 
 	switch rgs.player.portal.status {
 	case "triggered":
-		rl.DrawRectangleV(rgs.player.portal.entry_pos, rl.Vector2{PortalWidth, PortalHeight}, rl.Blue)
+		rl.DrawRectangleV(rgs.player.portal.entry_pos, rl.Vector2{X: PortalWidth, Y: PortalHeight}, rl.Blue)
 	case "ended":
-		rl.DrawRectangleV(rgs.player.portal.entry_pos, rl.Vector2{PortalWidth, PortalHeight}, rl.Blue)
-		rl.DrawRectangleV(rgs.player.portal.exit_pos, rl.Vector2{PortalWidth, PortalHeight}, rl.Brown)
+		rl.DrawRectangleV(rgs.player.portal.entry_pos, rl.Vector2{X: PortalWidth, Y: PortalHeight}, rl.Blue)
+		rl.DrawRectangleV(rgs.player.portal.exit_pos, rl.Vector2{X: PortalWidth, Y: PortalHeight}, rl.Brown)
 	}
 
 	for _, star := range rgs.stars {
