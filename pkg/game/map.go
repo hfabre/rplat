@@ -8,12 +8,12 @@ import (
 )
 
 type Property struct {
-	Name string `json:"name"`
+	Name  string `json:"name"`
 	Value string `json:"value"`
 }
 
 type Tile struct {
-	Index int `json:"index"`
+	Index      int        `json:"index"`
 	Properties []Property `json:"properties"`
 }
 
@@ -53,10 +53,10 @@ func (ts Tileset) Unload() {
 //
 
 type MapConfiguration struct {
-	Width      int `json:"width"`
-	Height     int `json:"height"`
-	TileHeight int `json:"tileHeight"`
-	TileWidth  int `json:"tileWidth"`
+	Width      int      `json:"width"`
+	Height     int      `json:"height"`
+	TileHeight int      `json:"tileHeight"`
+	TileWidth  int      `json:"tileWidth"`
 	Board      [][]Tile `json:"tiles"`
 }
 
@@ -81,15 +81,15 @@ func NewMapConfiguration(path string) MapConfiguration {
 //
 
 type Map struct {
-	mc         MapConfiguration
-	ts	       Tileset
+	mc MapConfiguration
+	ts Tileset
 
 	width      int
 	height     int
 	tileWidth  int
 	tileHeight int
 	board      [][]Tile
-	walls  []rl.Rectangle
+	walls      []rl.Rectangle
 }
 
 func NewMap(mc MapConfiguration, ts Tileset) Map {
@@ -112,14 +112,14 @@ func NewMap(mc MapConfiguration, ts Tileset) Map {
 	}
 
 	m := Map{
-		mc: mc,
-		ts: ts,
-		width: mc.Width,
-		height: mc.Height,
-		tileWidth: mc.TileWidth,
+		mc:         mc,
+		ts:         ts,
+		width:      mc.Width,
+		height:     mc.Height,
+		tileWidth:  mc.TileWidth,
 		tileHeight: mc.TileHeight,
-		board: mc.Board,
-		walls: walls,
+		board:      mc.Board,
+		walls:      walls,
 	}
 
 	return m
@@ -131,7 +131,7 @@ func (m Map) Draw() {
 			tileIndex := m.board[y][x].Index
 
 			if tileIndex >= 0 {
-				rl.DrawTexture(m.ts.tiles[tileIndex], int32(x * m.tileWidth), int32(y * m.tileHeight), rl.White)
+				rl.DrawTexture(m.ts.tiles[tileIndex], int32(x*m.tileWidth), int32(y*m.tileHeight), rl.White)
 			}
 		}
 	}

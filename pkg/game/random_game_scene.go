@@ -273,7 +273,7 @@ func (rgs RandomGameScene) Draw(factor float64) {
 
 	if Debug {
 		if Pause {
-			rl.DrawRectangleV(rl.Vector2{rgs.player.lastPos.X, rgs.player.lastPos.Y}, rgs.player.size, rl.Gray)
+			rl.DrawRectangleV(rl.Vector2{X: rgs.player.lastPos.X, Y: rgs.player.lastPos.Y}, rgs.player.size, rl.Gray)
 		}
 
 		posText := fmt.Sprintf("Position: %v - %v", rgs.player.pos.X, rgs.player.pos.Y)

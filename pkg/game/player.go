@@ -76,7 +76,7 @@ func (p *Player) FirePortal(walls []rl.Rectangle) {
 		p.last_portal_time = current_time
 		portal_box := p.Rectangle()
 		dir := DirectionVectorFromVectors(p.pos, rl.GetMousePosition())
-		velocity := rl.Vector2{dir.X * 10, dir.Y * 10}
+		velocity := rl.Vector2{X: dir.X * 10, Y: dir.Y * 10}
 
 		// TODO: impl Ray -> AABB collision
 		for j := 0; j < 10000; j++ {

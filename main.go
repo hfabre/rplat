@@ -1,8 +1,8 @@
 package main
 
 import (
-	"runtime"
 	rp "example.com/rplat/pkg/game"
+	"runtime"
 )
 
 func init() {

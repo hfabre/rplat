@@ -16,8 +16,8 @@ func NewHook(player Player) Hook {
 	return Hook{
 		pos:      player.pos,
 		lastPos:  player.pos,
-		velocity: rl.Vector2{dir.X * HookSpeed, dir.Y * HookSpeed},
-		size:     rl.Vector2{32, 32},
+		velocity: rl.Vector2{X: dir.X * HookSpeed, Y: dir.Y * HookSpeed},
+		size:     rl.Vector2{X: 32, Y: 32},
 		hooked:   false,
 		color:    rl.Orange,
 	}

@@ -32,8 +32,8 @@ func LerpVec2(vec rl.Vector2, factor float64) rl.Vector2 {
 // Does not works as expected.
 func RayAABBCollision(origin, direction rl.Vector2, aabb rl.Rectangle) (bool, float32) {
 	epsilon := 0.000001
-	box_min := rl.Vector2{aabb.X, aabb.Y}
-	box_max := rl.Vector2{aabb.X + aabb.Width, aabb.Y + aabb.Height}
+	box_min := rl.Vector2{X: aabb.X, Y: aabb.Y}
+	box_max := rl.Vector2{X: aabb.X + aabb.Width, Y: aabb.Y + aabb.Height}
 	tMin := float32(math.Inf(-1))
 	tMax := float32(math.Inf(1))
 
