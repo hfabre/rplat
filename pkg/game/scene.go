@@ -8,10 +8,11 @@ type Scene interface {
 	Update(float32)
 	Draw(float64)
 	End()
+	ShouldExit() bool
 }
 
 type SceneManager struct {
-	scenes map[string]Scene
+	scenes           map[string]Scene
 	currentSceneName string
 }
 
@@ -44,4 +45,8 @@ func (sm SceneManager) Draw(factor float64) {
 
 func (sm SceneManager) CurrentScene() Scene {
 	return sm.scenes[sm.currentSceneName]
+}
+
+func (sm SceneManager) ShouldExit() bool {
+	return sm.CurrentScene().ShouldExit()
 }

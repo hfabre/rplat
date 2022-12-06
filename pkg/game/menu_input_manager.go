@@ -13,13 +13,9 @@ func NewMenuInputManager() MenuInputManager {
 	im := MenuInputManager{}
 	m := make(map[string]int32)
 
-	m["move_left"] = int32(rl.KEY_A)
 	m["move_left"] = int32(rl.KEY_LEFT)
-	m["move_right"] = int32(rl.KEY_D)
 	m["move_right"] = int32(rl.KEY_RIGHT)
-	m["move_up"] = int32(rl.KEY_W)
 	m["move_up"] = int32(rl.KEY_UP)
-	m["move_down"] = int32(rl.KEY_S)
 	m["move_down"] = int32(rl.KEY_DOWN)
 	m["validate"] = int32(rl.KEY_ENTER)
 

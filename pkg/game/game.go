@@ -37,13 +37,13 @@ func (g *Game) Run() {
 	defer rl.CloseWindow()
 
 	scenes := make(map[string]Scene)
-	scenes["main_menu"] = NewMainMenuSceneWrapper()
-	scenes["random_game"] = NewRandGameSceneWrapper()
 	g.sm = SceneManager{scenes: scenes, currentSceneName: "main_menu"}
+	scenes["main_menu"] = NewMainMenuSceneWrapper(&g.sm)
+	scenes["random_game"] = NewRandGameSceneWrapper(&g.sm)
 
 	rl.SetTargetFPS(FPS)
 
-	for !rl.WindowShouldClose() {
+	for !rl.WindowShouldClose() && !g.sm.ShouldExit() {
 		g.Tick()
 	}
 }

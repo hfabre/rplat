@@ -16,13 +16,13 @@ type RandGameSceneWrapper struct {
 	rgs *RandomGameScene
 }
 
-func NewRandGameSceneWrapper() RandGameSceneWrapper {
-	return RandGameSceneWrapper{rgs: NewRandomGameScene()}
+func NewRandGameSceneWrapper(sm *SceneManager) RandGameSceneWrapper {
+	return RandGameSceneWrapper{rgs: NewRandomGameScene(sm)}
 }
 
 // Implement Scene interface
 func (rgsw RandGameSceneWrapper) Init() {
-
+	rgsw.rgs.Init()
 }
 
 func (rgsw RandGameSceneWrapper) UpdateInputs() {
@@ -46,7 +46,11 @@ func (rgsw RandGameSceneWrapper) Draw(factor float64) {
 }
 
 func (rgsw RandGameSceneWrapper) End() {
+	rgsw.rgs.End()
+}
 
+func (rgsw RandGameSceneWrapper) ShouldExit() bool {
+	return rgsw.rgs.ShouldExit()
 }
 
 type RandomGameScene struct {
@@ -58,12 +62,27 @@ type RandomGameScene struct {
 	durationSeconds int
 	stars           []Star
 	score           int
-	printScore      bool
+	sceneManager    *SceneManager
+	gameEnded       bool
 }
 
-func NewRandomGameScene() *RandomGameScene {
+func NewRandomGameScene(sm *SceneManager) *RandomGameScene {
 	rgs := &RandomGameScene{}
 
+	// Load level
+	mc := NewMapConfiguration("./assets/map.json")
+	tileset := NewTileset("./assets/tileset.png", mc.TileWidth, mc.TileHeight)
+	im := NewInputManager()
+
+	rgs.level = NewMap(mc, tileset)
+	rgs.inputManager = &im
+	rgs.durationSeconds = 30
+	rgs.sceneManager = sm
+
+	return rgs
+}
+
+func (rgs *RandomGameScene) Init() {
 	player := Player{
 		pos:          rl.Vector2{X: 32, Y: 32},
 		lastPos:      rl.Vector2{X: 20, Y: 20},
@@ -75,28 +94,20 @@ func NewRandomGameScene() *RandomGameScene {
 	}
 
 	rgs.player = &player
-
-	// Load level
-	mc := NewMapConfiguration("./assets/map.json")
-	tileset := NewTileset("./assets/tileset.png", mc.TileWidth, mc.TileHeight)
-	rgs.level = NewMap(mc, tileset)
-
-	im := NewInputManager()
-	rgs.inputManager = &im
-
-	rgs.durationSeconds = 30
-	rgs.printScore = false
-
-	// TODO: Add an init function
+	rgs.gameEnded = false
 	rgs.ticker = time.NewTicker(1 * time.Second)
-	go rgs.StartsCounter()
+	rgs.elapsedSeconds = 0
 
 	for i := 0; i < 20; i++ {
 		for !rgs.SpawnStar() {
 		}
 	}
 
-	return rgs
+	go rgs.StartsCounter()
+}
+
+func (rgs *RandomGameScene) End() {
+	rgs.stars = nil
 }
 
 func (rgs *RandomGameScene) SpawnStar() bool {
@@ -133,25 +144,29 @@ func (rgs *RandomGameScene) ClearInputs() {
 
 func (rgs *RandomGameScene) HandleEvents() {
 	for i := 0; i < len(rgs.inputManager.events); i++ {
-		switch e := rgs.inputManager.events[i]; e {
-		case "pause":
-			Pause = !Pause
-		case "move_right":
-			rgs.player.MoveRight()
-		case "move_left":
-			rgs.player.MoveLeft()
-		case "jump":
-			rgs.player.Jump()
-		case "hook":
-			rgs.player.Hook()
-		case "stop_hook":
-			rgs.player.StopHook()
-		case "dash":
-			rgs.player.Dash()
-		case "portal":
-			rgs.player.FirePortal(rgs.level.walls)
-		default:
-			// Unknown event
+		if rgs.gameEnded && rgs.inputManager.events[i] == "validate" {
+			rgs.sceneManager.SwapScene("main_menu")
+		} else {
+			switch e := rgs.inputManager.events[i]; e {
+			case "pause":
+				Pause = !Pause
+			case "move_right":
+				rgs.player.MoveRight()
+			case "move_left":
+				rgs.player.MoveLeft()
+			case "jump":
+				rgs.player.Jump()
+			case "hook":
+				rgs.player.Hook()
+			case "stop_hook":
+				rgs.player.StopHook()
+			case "dash":
+				rgs.player.Dash()
+			case "portal":
+				rgs.player.FirePortal(rgs.level.walls)
+			default:
+				// Unknown event
+			}
 		}
 	}
 }
@@ -160,23 +175,32 @@ func (rgs *RandomGameScene) StartsCounter() {
 	for range rgs.ticker.C {
 		if !Pause {
 			rgs.elapsedSeconds++
+
+			if rgs.elapsedSeconds >= rgs.durationSeconds {
+				rgs.EndGame(false)
+				return
+			}
 		}
 	}
 }
 
 func (rgs *RandomGameScene) EndGame(complete bool) {
-	Pause = true
-	rgs.printScore = true
-
 	if complete {
 		multiplier := rgs.durationSeconds - rgs.elapsedSeconds
 		rgs.score *= multiplier
 	}
+
+	rgs.gameEnded = true
+	rgs.ticker.Stop()
+}
+
+func (rgs RandomGameScene) ShouldExit() bool {
+	return false
 }
 
 func (rgs *RandomGameScene) Update(deltaTime float32) {
-	if rgs.elapsedSeconds >= rgs.durationSeconds {
-		rgs.EndGame(false)
+	if rgs.gameEnded {
+		return
 	}
 
 	if !Pause {
@@ -240,9 +264,11 @@ func (rgs RandomGameScene) Draw(factor float64) {
 	timeText := fmt.Sprintf("Elapsed time: %v", rgs.elapsedSeconds)
 	rl.DrawText(timeText, 500, 20, 40, rl.Black)
 
-	if rgs.printScore {
+	if rgs.gameEnded {
 		timeText := fmt.Sprintf("Score: %v", rgs.score)
 		rl.DrawText(timeText, 500, 60, 40, rl.Black)
+
+		rl.DrawText("Press enter to go back to main menu", 350, 200, 30, rl.Black)
 	}
 
 	if Debug {

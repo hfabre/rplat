@@ -25,6 +25,7 @@ func NewInputManager() InputManager {
 	m["mouse_hook"] = int32(rl.MOUSE_RIGHT_BUTTON)
 	m["dash"] = int32(rl.KEY_LEFT_SHIFT)
 	m["portal"] = int32(rl.MOUSE_LEFT_BUTTON)
+	m["validate"] = int32(rl.KEY_ENTER)
 
 	im.inputMap = m
 	return im
@@ -74,6 +75,10 @@ func (im *InputManager) Update() {
 
 		if rl.IsMouseButtonDown(im.inputMap["portal"]) {
 			im.events = append(im.events, "portal")
+		}
+
+		if rl.IsKeyDown(im.inputMap["validate"]) {
+			im.events = append(im.events, "validate")
 		}
 	}
 }

@@ -9,8 +9,8 @@ type MainMenuSceneWrapper struct {
 	mms *MainMenuScene
 }
 
-func NewMainMenuSceneWrapper() MainMenuSceneWrapper {
-	return MainMenuSceneWrapper{mms: NewMainMenuScene()}
+func NewMainMenuSceneWrapper(sm *SceneManager) MainMenuSceneWrapper {
+	return MainMenuSceneWrapper{mms: NewMainMenuScene(sm)}
 }
 
 // Implement Scene interface
@@ -42,17 +42,25 @@ func (mmsw MainMenuSceneWrapper) End() {
 	mmsw.mms.End()
 }
 
+func (mmsw MainMenuSceneWrapper) ShouldExit() bool {
+	return mmsw.mms.ShouldExit()
+}
+
 type MainMenuScene struct {
 	inputManager *MenuInputManager
 	selectedItem int
 	items        []string
+	sceneManager *SceneManager
+	exit         bool
 }
 
-func NewMainMenuScene() *MainMenuScene {
+func NewMainMenuScene(sm *SceneManager) *MainMenuScene {
 	mms := &MainMenuScene{}
 
 	im := NewMenuInputManager()
 	mms.inputManager = &im
+	mms.sceneManager = sm
+	mms.exit = false
 
 	mms.items = append(mms.items, "Tutorial")
 	mms.items = append(mms.items, "Random game")
@@ -76,13 +84,28 @@ func (mms *MainMenuScene) End() {
 func (mms *MainMenuScene) HandleEvents() {
 	for i := 0; i < len(mms.inputManager.events); i++ {
 		switch e := mms.inputManager.events[i]; e {
-		case "move_right":
-		case "move_left":
 		case "move_up":
+			if mms.selectedItem <= 0 {
+				mms.selectedItem = len(mms.items) - 1
+			} else {
+				mms.selectedItem -= 1
+			}
 		case "move_down":
+			if mms.selectedItem >= len(mms.items)-1 {
+				mms.selectedItem = 0
+			} else {
+				mms.selectedItem += 1
+			}
 		case "validate":
+			switch mms.selectedItem {
+			case 0:
+			case 1:
+				mms.sceneManager.SwapScene("random_game")
+			case 2:
+				mms.exit = true
+			}
 		default:
-			// Unknown event
+			// Unknown menu item
 		}
 	}
 }
@@ -91,23 +114,25 @@ func (mms *MainMenuScene) Update(deltaTime float32) {
 
 }
 
+func (mms MainMenuScene) ShouldExit() bool {
+	return mms.exit
+}
+
 func (mms MainMenuScene) Draw(factor float64) {
 	rl.BeginDrawing()
 	defer rl.EndDrawing()
-	var color rl.Color
-	var x int32
-	var y int32
 
-	for i, item := range mms.items {
-		color = rl.Black
-		if i == mms.selectedItem {
-			color = rl.Green
-		}
-
-		x = int32(ScreenWidth/2 - (20 + i + 1))
-		y = int32(ScreenHeight/2 - (20 + i + 1))
-		rl.DrawText(item, x, y, 20, color)
-	}
+	rl.DrawText(mms.items[0], 500, 100, 20, mms.ColorFromItem(0))
+	rl.DrawText(mms.items[1], 500, 130, 20, mms.ColorFromItem(1))
+	rl.DrawText(mms.items[2], 500, 160, 20, mms.ColorFromItem(2))
 
 	rl.ClearBackground(rl.RayWhite)
+}
+
+func (mms MainMenuScene) ColorFromItem(item_index int) rl.Color {
+	if item_index == mms.selectedItem {
+		return rl.Green
+	} else {
+		return rl.Black
+	}
 }
