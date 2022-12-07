@@ -183,3 +183,19 @@ func (p *Player) SolveCollision(wall rl.Rectangle, direction string) {
 		p.velocity.Y = 0
 	}
 }
+
+func (p Player) Draw(factor float64) {
+	p.portal.Draw()
+
+	currentStateLerp := LerpVec2(p.pos, factor)
+	lastStateLerp := LerpVec2(p.pos, 1-factor)
+	rl.DrawRectangleV(rl.Vector2{X: currentStateLerp.X + lastStateLerp.X, Y: currentStateLerp.Y + lastStateLerp.Y}, p.size, p.color)
+
+	if p.hookLaunched {
+		currentStateLerp = LerpVec2(p.hook.pos, factor)
+		lastStateLerp = LerpVec2(p.hook.pos, 1-factor)
+		rl.DrawRectangleV(rl.Vector2{X: currentStateLerp.X + lastStateLerp.X, Y: currentStateLerp.Y + lastStateLerp.Y}, p.hook.size, p.hook.color)
+
+		rl.DrawLineEx(p.pos, p.hook.pos, 5, rl.Black)
+	}
+}

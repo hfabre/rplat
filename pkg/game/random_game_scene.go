@@ -8,9 +8,6 @@ import (
 	rl "github.com/chunqian/go-raylib/raylib"
 )
 
-const HookVerticalForce = 30
-const HookHorizontalForce = 60
-
 // Workaround to be able to call methods on a pointer on my interface
 type RandGameSceneWrapper struct {
 	rgs *RandomGameScene
@@ -236,29 +233,9 @@ func (rgs RandomGameScene) Draw(factor float64) {
 	rl.ClearBackground(rl.RayWhite)
 
 	rgs.level.Draw()
-
-	currentStateLerp := LerpVec2(rgs.player.pos, factor)
-	lastStateLerp := LerpVec2(rgs.player.pos, 1-factor)
-	rl.DrawRectangleV(rl.Vector2{X: currentStateLerp.X + lastStateLerp.X, Y: currentStateLerp.Y + lastStateLerp.Y}, rgs.player.size, rgs.player.color)
-
-	if rgs.player.hookLaunched {
-		currentStateLerp = LerpVec2(rgs.player.hook.pos, factor)
-		lastStateLerp = LerpVec2(rgs.player.hook.pos, 1-factor)
-		rl.DrawRectangleV(rl.Vector2{X: currentStateLerp.X + lastStateLerp.X, Y: currentStateLerp.Y + lastStateLerp.Y}, rgs.player.hook.size, rgs.player.hook.color)
-
-		rl.DrawLineEx(rgs.player.pos, rgs.player.hook.pos, 5, rl.Black)
-	}
-
-	switch rgs.player.portal.status {
-	case "triggered":
-		rl.DrawRectangleV(rgs.player.portal.entry_pos, rl.Vector2{X: PortalWidth, Y: PortalHeight}, rl.Blue)
-	case "ended":
-		rl.DrawRectangleV(rgs.player.portal.entry_pos, rl.Vector2{X: PortalWidth, Y: PortalHeight}, rl.Blue)
-		rl.DrawRectangleV(rgs.player.portal.exit_pos, rl.Vector2{X: PortalWidth, Y: PortalHeight}, rl.Brown)
-	}
-
+	rgs.player.Draw(factor)
 	for _, star := range rgs.stars {
-		rl.DrawRectangleRec(star.Rectangle(), rl.Yellow)
+		star.Draw()
 	}
 
 	timeText := fmt.Sprintf("Elapsed time: %v", rgs.elapsedSeconds)

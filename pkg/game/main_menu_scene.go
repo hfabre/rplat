@@ -61,6 +61,7 @@ func NewMainMenuScene(sm *SceneManager) *MainMenuScene {
 	mms.inputManager = &im
 	mms.sceneManager = sm
 	mms.exit = false
+	mms.selectedItem = 1
 
 	mms.items = append(mms.items, "Tutorial")
 	mms.items = append(mms.items, "Random game")
