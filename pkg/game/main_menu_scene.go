@@ -100,6 +100,7 @@ func (mms *MainMenuScene) HandleEvents() {
 		case "validate":
 			switch mms.selectedItem {
 			case 0:
+				mms.sceneManager.SwapScene("tutorial_game")
 			case 1:
 				mms.sceneManager.SwapScene("random_game")
 			case 2:

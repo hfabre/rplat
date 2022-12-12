@@ -51,16 +51,14 @@ func (tgsw TuorialGameSceneWrapper) ShouldExit() bool {
 }
 
 type TuorialGameScene struct {
-	player          *Player
-	level           Map
-	inputManager    *InputManager
-	elapsedSeconds  int
-	ticker          *time.Ticker
-	durationSeconds int
-	stars           []Star
-	score           int
-	sceneManager    *SceneManager
-	gameEnded       bool
+	player       *Player
+	level        Map
+	inputManager *InputManager
+	stars        []Star
+	score        int
+	sceneManager *SceneManager
+	gameEnded    bool
+	helpOpen     bool
 }
 
 func NewTuorialGameScene(sm *SceneManager) *TuorialGameScene {
@@ -73,7 +71,6 @@ func NewTuorialGameScene(sm *SceneManager) *TuorialGameScene {
 
 	tgs.level = NewMap(mc, tileset)
 	tgs.inputManager = &im
-	tgs.durationSeconds = 30
 	tgs.sceneManager = sm
 
 	return tgs
@@ -92,15 +89,11 @@ func (tgs *TuorialGameScene) Init() {
 
 	tgs.player = &player
 	tgs.gameEnded = false
-	tgs.ticker = time.NewTicker(1 * time.Second)
-	tgs.elapsedSeconds = 0
 
-	for i := 0; i < 20; i++ {
+	for i := 0; i < 2; i++ {
 		for !tgs.SpawnStar() {
 		}
 	}
-
-	go tgs.StartsCounter()
 }
 
 func (tgs *TuorialGameScene) End() {
@@ -145,8 +138,8 @@ func (tgs *TuorialGameScene) HandleEvents() {
 			tgs.sceneManager.SwapScene("main_menu")
 		} else {
 			switch e := tgs.inputManager.events[i]; e {
-			case "pause":
-				Pause = !Pause
+			case "help":
+				tgs.helpOpen = !tgs.helpOpen
 			case "move_right":
 				tgs.player.MoveRight()
 			case "move_left":
@@ -161,34 +154,13 @@ func (tgs *TuorialGameScene) HandleEvents() {
 				tgs.player.Dash()
 			case "portal":
 				tgs.player.FirePortal(tgs.level.walls)
+			case "quit":
+				tgs.gameEnded = true
 			default:
 				// Unknown event
 			}
 		}
 	}
-}
-
-func (tgs *TuorialGameScene) StartsCounter() {
-	for range tgs.ticker.C {
-		if !Pause {
-			tgs.elapsedSeconds++
-
-			if tgs.elapsedSeconds >= tgs.durationSeconds {
-				tgs.EndGame(false)
-				return
-			}
-		}
-	}
-}
-
-func (tgs *TuorialGameScene) EndGame(complete bool) {
-	if complete {
-		multiplier := tgs.durationSeconds - tgs.elapsedSeconds
-		tgs.score *= multiplier
-	}
-
-	tgs.gameEnded = true
-	tgs.ticker.Stop()
 }
 
 func (tgs TuorialGameScene) ShouldExit() bool {
@@ -197,32 +169,32 @@ func (tgs TuorialGameScene) ShouldExit() bool {
 
 func (tgs *TuorialGameScene) Update(deltaTime float32) {
 	if tgs.gameEnded {
+		tgs.sceneManager.SwapScene("main_menu")
+	}
+
+	if tgs.helpOpen {
 		return
 	}
 
-	if !Pause {
-		tgs.player.color = rl.Green
-		tgs.player.lastPos = tgs.player.pos
-		tgs.player.lastVelocity = tgs.player.velocity
+	tgs.player.color = rl.Green
+	tgs.player.lastPos = tgs.player.pos
+	tgs.player.lastVelocity = tgs.player.velocity
 
-		tgs.player.Update(deltaTime)
-		tgs.player.checkAndHandleCollisions(tgs.level.walls)
+	tgs.player.Update(deltaTime)
+	tgs.player.checkAndHandleCollisions(tgs.level.walls)
 
-		starsToRemove := []int{}
-		for i, star := range tgs.stars {
-			if isColliding(tgs.player.Rectangle(), star.Rectangle()) {
-				tgs.score += 10
-				starsToRemove = append(starsToRemove, i)
+	starsToRemove := []int{}
+	for i, star := range tgs.stars {
+		if isColliding(tgs.player.Rectangle(), star.Rectangle()) {
+			tgs.score += 10
+			starsToRemove = append(starsToRemove, i)
+			for !tgs.SpawnStar() {
 			}
 		}
+	}
 
-		for _, j := range starsToRemove {
-			tgs.stars = RemoveIndexStar(tgs.stars, j)
-		}
-
-		if len(tgs.stars) == 0 {
-			tgs.EndGame(true)
-		}
+	for _, j := range starsToRemove {
+		tgs.stars = RemoveIndexStar(tgs.stars, j)
 	}
 }
 
@@ -232,14 +204,36 @@ func (tgs TuorialGameScene) Draw(factor float64) {
 
 	rl.ClearBackground(rl.RayWhite)
 
+	if tgs.helpOpen {
+		tgs.DrawHelp()
+	} else {
+		tgs.DrawGame(factor)
+	}
+}
+
+func (tgs TuorialGameScene) DrawHelp() {
+	leftOffset := 150
+
+	rl.DrawText("Help menu press H again to close.", 250, 50, 50, rl.Black)
+	rl.DrawText("Press BACKSPACE to leave", 300, 110, 50, rl.Black)
+
+	rl.DrawText("In random game mode you have 30 seconds to catch all the stars", int32(leftOffset), 200, 30, rl.Black)
+	rl.DrawText("Your score depends on how much remaining time you still get.", int32(leftOffset), 230, 30, rl.Black)
+	rl.DrawText("To achieve your mission you have access to multiple fast travel skills", int32(leftOffset), 270, 30, rl.Black)
+
+	leftOffset = leftOffset - 130
+	rl.DrawText("Teeworlds fan ? You can use a grappling hook using your mouse right click !", int32(leftOffset), 350, 30, rl.Black)
+	rl.DrawText("Already played portal ? You can fire your portal gun using your mouse left click !", int32(leftOffset), 380, 30, rl.Black)
+	rl.DrawText("And finally, you can dash in the direction you are going using left shift.", int32(leftOffset), 410, 30, rl.Black)
+}
+
+func (tgs TuorialGameScene) DrawGame(factor float64) {
 	tgs.level.Draw()
 	tgs.player.Draw(factor)
 	for _, star := range tgs.stars {
 		star.Draw()
 	}
 
-	timeText := fmt.Sprintf("Elapsed time: %v", tgs.elapsedSeconds)
-	rl.DrawText(timeText, 500, 20, 40, rl.Black)
 	scoreText := fmt.Sprintf("Score: %v", tgs.score)
 	rl.DrawText(scoreText, 500, 60, 40, rl.Black)
 
