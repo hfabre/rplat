@@ -61,6 +61,7 @@ func NewMainMenuScene(sm *SceneManager) *MainMenuScene {
 	mms.inputManager = &im
 	mms.sceneManager = sm
 	mms.exit = false
+	mms.selectedItem = 1
 
 	mms.items = append(mms.items, "Tutorial")
 	mms.items = append(mms.items, "Random game")
@@ -99,6 +100,7 @@ func (mms *MainMenuScene) HandleEvents() {
 		case "validate":
 			switch mms.selectedItem {
 			case 0:
+				mms.sceneManager.SwapScene("tutorial_game")
 			case 1:
 				mms.sceneManager.SwapScene("random_game")
 			case 2:

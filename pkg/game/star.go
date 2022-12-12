@@ -17,3 +17,7 @@ func (s Star) Rectangle() rl.Rectangle {
 		Height: StarHeight,
 	}
 }
+
+func (s Star) Draw() {
+	rl.DrawRectangleRec(s.Rectangle(), rl.Yellow)
+}

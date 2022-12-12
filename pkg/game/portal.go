@@ -33,6 +33,16 @@ func (p Portal) EntryRectangle() rl.Rectangle {
 	}
 }
 
+func (p Portal) Draw() {
+	switch p.status {
+	case "triggered":
+		rl.DrawRectangleV(p.entry_pos, rl.Vector2{X: PortalWidth, Y: PortalHeight}, rl.Blue)
+	case "ended":
+		rl.DrawRectangleV(p.entry_pos, rl.Vector2{X: PortalWidth, Y: PortalHeight}, rl.Blue)
+		rl.DrawRectangleV(p.exit_pos, rl.Vector2{X: PortalWidth, Y: PortalHeight}, rl.Brown)
+	}
+}
+
 func SolvePortalCollision(portal_box *rl.Rectangle, wall rl.Rectangle, direction string) {
 	switch direction {
 	case "bottom":

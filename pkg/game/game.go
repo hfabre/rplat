@@ -40,6 +40,7 @@ func (g *Game) Run() {
 	g.sm = SceneManager{scenes: scenes, currentSceneName: "main_menu"}
 	scenes["main_menu"] = NewMainMenuSceneWrapper(&g.sm)
 	scenes["random_game"] = NewRandGameSceneWrapper(&g.sm)
+	scenes["tutorial_game"] = NewTuorialGameSceneWrapper(&g.sm)
 
 	rl.SetTargetFPS(FPS)
 

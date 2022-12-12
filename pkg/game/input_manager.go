@@ -26,6 +26,8 @@ func NewInputManager() InputManager {
 	m["dash"] = int32(rl.KEY_LEFT_SHIFT)
 	m["portal"] = int32(rl.MOUSE_LEFT_BUTTON)
 	m["validate"] = int32(rl.KEY_ENTER)
+	m["help"] = int32(rl.KEY_H)
+	m["quit"] = int32(rl.KEY_BACKSPACE)
 
 	im.inputMap = m
 	return im
@@ -40,6 +42,14 @@ func (im *InputManager) Update() {
 	}
 
 	if !Pause {
+		if rl.IsKeyPressed(im.inputMap["help"]) {
+			im.events = append(im.events, "help")
+		}
+
+		if rl.IsKeyPressed(im.inputMap["quit"]) {
+			im.events = append(im.events, "quit")
+		}
+
 		if rl.IsKeyDown(im.inputMap["move_left"]) {
 			im.events = append(im.events, "move_left")
 		}
